@@ -11,7 +11,6 @@ import java.util.concurrent.Callable;
 
 public class SegmentServiceImpl implements SegmentService, Callable {
     private final static JiebaSegmenter segmenter = new JiebaSegmenter();
-    static List<String> test_words = segmenter.sentenceProcess("你好");
     private final static RedisUtil redisUtil = new RedisUtil();
 
     private String requestId;
