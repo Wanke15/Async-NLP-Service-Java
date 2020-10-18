@@ -9,3 +9,8 @@ redis:
   max-idle: 20
   min-idle: 0
   timeout: 3000
+
+spring:
+  mvc:
+    servlet:
+      load-on-startup: 1

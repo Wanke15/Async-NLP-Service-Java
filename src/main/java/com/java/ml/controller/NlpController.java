@@ -1,6 +1,7 @@
 package com.java.ml.controller;
 
 import com.java.ml.model.SegmentSubmitData;
+import com.java.ml.service.NlpBasicImpl;
 import com.java.ml.service.SegmentServiceImpl;
 import com.java.ml.util.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,43 +15,48 @@ import java.util.concurrent.Executors;
 
 @RestController
 public class NlpController {
-    @Autowired
-    RedisUtil redisUtil = new RedisUtil();
-
-    SegmentServiceImpl segmentService = new SegmentServiceImpl("202003081420", "301004F0DA14682B");
-
-    ExecutorService pool = Executors.newFixedThreadPool(24);
+    private NlpBasicImpl nlpBasic = new NlpBasicImpl();
 
     @RequestMapping(value = "/health", method = RequestMethod.GET)
     String health() {
-        return "I am doing good!";
+        return "I am doing great!";
     }
 
     @ResponseBody
-    @RequestMapping(value = "/api/v0.1/segment/submit", method = RequestMethod.POST)
-    public Map<String, Object> submit(@RequestBody SegmentSubmitData segmentSubmitData)
+    @RequestMapping(value = "/api/v0.1/nlp/segment", method = RequestMethod.GET)
+    public Map<String, Object> segment(@RequestParam(value = "text", required = true) String text)
     {
         Map<String,Object> segmentResponse = new HashMap<String, Object>();
-        // segmentService.submit(segmentSubmitData.getRequestId(), segmentSubmitData.getText());
-        pool.submit(new SegmentServiceImpl(segmentSubmitData.getRequestId(), segmentSubmitData.getText()));
+        List<String> result = nlpBasic.segment(text);
         segmentResponse.put("code", "200");
-        segmentResponse.put("requestId", segmentSubmitData.getRequestId());
-        segmentResponse.put("msg", "提交成功");
+        segmentResponse.put("data", result);
+        segmentResponse.put("msg", "success");
         return segmentResponse;
     }
 
     @ResponseBody
-    @RequestMapping("/api/v0.1/segment/fetchResult")
-    public Map<String, Object> fetchResult(@RequestParam(value = "requestId", required = true) String requestId)
+    @RequestMapping(value = "/api/v0.1/nlp/segmentHanlp", method = RequestMethod.GET)
+    public Map<String, Object> segmentHanlp(@RequestParam(value = "text", required = true) String text)
     {
-        Map<String,Object> fetchResponse = new HashMap<String, Object>();
-        List<String> words = redisUtil.lrange(requestId, 0, -1);
+        Map<String,Object> segmentResponse = new HashMap<String, Object>();
+//        List<Map<String, String>> result = nlpBasic.segmentHanlp(text);
+        List<Map<String, String>> result = nlpBasic.segmentNlpTokenizer(text);
+        segmentResponse.put("code", "200");
+        segmentResponse.put("data", result);
+        segmentResponse.put("msg", "success");
+        return segmentResponse;
+    }
 
-        fetchResponse.put("code", "200");
-        fetchResponse.put("requestId", requestId);
-        fetchResponse.put("data", words);
-        fetchResponse.put("msg", "查询成功");
-        return fetchResponse;
+    @ResponseBody
+    @RequestMapping(value = "/api/v0.1/nlp/depParse", method = RequestMethod.GET)
+    public Map<String, Object> depParse(@RequestParam(value = "text", required = true) String text)
+    {
+        Map<String,Object> segmentResponse = new HashMap<String, Object>();
+        List<Map<String, String>> result = nlpBasic.depParse(text);
+        segmentResponse.put("code", "200");
+        segmentResponse.put("data", result);
+        segmentResponse.put("msg", "success");
+        return segmentResponse;
     }
 
 
