@@ -5,6 +5,7 @@ import com.java.ml.service.NlpBasicImpl;
 import com.java.ml.service.SegmentServiceImpl;
 import com.java.ml.util.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -49,7 +50,21 @@ public class NlpController {
 
     @ResponseBody
     @RequestMapping(value = "/api/v0.1/nlp/depParse", method = RequestMethod.GET)
+//    @Cacheable(value = "depCache", key = "#text")
     public Map<String, Object> depParse(@RequestParam(value = "text", required = true) String text)
+    {
+        Map<String,Object> segmentResponse = new HashMap<String, Object>();
+        List<Map<String, String>> result = nlpBasic.depParse(text);
+        segmentResponse.put("code", "200");
+        segmentResponse.put("data", result);
+        segmentResponse.put("msg", "success");
+        return segmentResponse;
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/api/v0.2/nlp/depParse", method = RequestMethod.GET)
+    @Cacheable(value = "depCache", key = "#text")
+    public Map<String, Object> depParse2(@RequestParam(value = "text", required = true) String text)
     {
         Map<String,Object> segmentResponse = new HashMap<String, Object>();
         List<Map<String, String>> result = nlpBasic.depParse(text);

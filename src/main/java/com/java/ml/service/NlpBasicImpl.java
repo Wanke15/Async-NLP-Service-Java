@@ -7,16 +7,14 @@ import com.hankcs.hanlp.seg.common.Term;
 import com.hankcs.hanlp.tokenizer.NLPTokenizer;
 import com.hankcs.hanlp.tokenizer.StandardTokenizer;
 import com.huaban.analysis.jieba.JiebaSegmenter;
+import org.springframework.stereotype.Service;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class NlpBasicImpl {
+@Service
+public class NlpBasicImpl implements Serializable {
     private final static JiebaSegmenter segmenter = new JiebaSegmenter();
-    private final static Set<String> sameLevelRels = new HashSet<String>(){{
-        add("并列关系");
-        add("左附加关系");
-        add("右附加关系");
-    }};
 
     public NlpBasicImpl()
     {
@@ -72,12 +70,18 @@ public class NlpBasicImpl {
 
         List<String> nouns = new ArrayList<>();
 
+        // 构建定中关系词典、确定核心词、名词
         for (int i = 0; i <= wordArray.length - 1; i++)
         {
             CoNLLWord word = wordArray[i];
 
-            System.err.println(word);
-            depDict.put(word.HEAD.LEMMA, new HashMap<String, String>(){{ put("rel", word.DEPREL);put("lemma", word.LEMMA);}});
+//            System.err.println(word);
+            if (word.DEPREL.equals("定中关系")) {
+                depDict.put(word.HEAD.LEMMA, new HashMap<String, String>() {{
+                    put("rel", word.DEPREL);
+                    put("lemma", word.LEMMA);
+                }});
+            }
 
             if (word.DEPREL.equals("核心关系") && !word.POSTAG.equals("v"))
             {
@@ -89,7 +93,7 @@ public class NlpBasicImpl {
                 nouns.add(word.LEMMA);
             }
         }
-         System.err.println("依存词典: " + depDict);
+//         System.err.println("依存词典: " + depDict);
         // 最终结果
         List<Map<String, String>> result = new ArrayList<>();
 
@@ -98,11 +102,11 @@ public class NlpBasicImpl {
         {
             CoNLLWord word = wordArray[i];
 
-            System.out.printf("%s --(%s)--> %s\n", word.LEMMA, word.DEPREL, word.HEAD.LEMMA);
+//            System.out.printf("%s --(%s)--> %s\n", word.LEMMA, word.DEPREL, word.HEAD.LEMMA);
             // 与核心词存在定中关系
             if (word.HEAD.LEMMA.equals(rootWord) && word.DEPREL.equals("定中关系"))
             {
-                System.err.println("################# rootWord: " + rootWord + ", modifier: " + " &&&&&&&&&&&&" + word.LEMMA + depDict);
+//                System.err.println("################# rootWord: " + rootWord + ", modifier: " + " &&&&&&&&&&&&" + word.LEMMA + depDict);
                 rootWordRes.put("rootWord", rootWord);
                 String completeModifier = word.LEMMA;
                 if (depDict.containsKey(completeModifier)) {
@@ -118,16 +122,27 @@ public class NlpBasicImpl {
             if (word.HEAD.LEMMA.equals(rootWord) && word.DEPREL.equals("并列关系"))
             {
 
-                String completeModifier = word.LEMMA;
-                if (depDict.containsKey(completeModifier)) {
-                    String rel = depDict.get(completeModifier).get("rel");
+                String modifier = "";
+                if (depDict.containsKey(word.LEMMA)) {
+                    String rel = depDict.get(word.LEMMA).get("rel");
                     if (rel != null && rel.equals("定中关系")) {
-                        completeModifier = depDict.get(completeModifier).get("lemma");
+                        modifier = depDict.get(word.LEMMA).get("lemma");
                     }
                 }
-//                rootWordRes.put("modifier", completeModifier);
-                String finalCompleteModifier = completeModifier;
-                result.add(new HashMap<String, String>(){{ put("rootWord", word.LEMMA); put("modifier", finalCompleteModifier);}});
+
+                if (!modifier.equals("")) {
+                    String finalModifier = modifier;
+                    result.add(new HashMap<String, String>() {{
+                        put("rootWord", word.LEMMA);
+                        put("modifier", finalModifier);
+                    }});
+
+                }
+                else {
+                    result.add(new HashMap<String, String>() {{
+                        put("rootWord", word.LEMMA);
+                    }});
+                }
             }
         }
 

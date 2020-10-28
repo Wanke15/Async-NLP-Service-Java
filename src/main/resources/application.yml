@@ -1,16 +1,16 @@
 server:
   port: 9090
 
-redis:
-  host: localhost
-  port: 6379
-  max-wait: 30000
-  max-live: 100
-  max-idle: 20
-  min-idle: 0
-  timeout: 3000
-
 spring:
   mvc:
     servlet:
       load-on-startup: 1
+  redis:
+    host: localhost
+    port: 6379
+    max-wait: 30000
+    max-live: 100
+    max-idle: 20
+    min-idle: 0
+    timeout: 3000
+    password:
